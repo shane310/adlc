@@ -1,0 +1,126 @@
+name: Story to Code (SDD Full Pipeline)
+
+on:
+  pull_request:
+    branches:
+      - develop
+    types:
+      - opened
+      - synchronize
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Detect new story files
+        id: detect_stories
+        run: |
+          git fetch origin "${{ github.base_ref }}"
+          NEW_STORIES=$(git diff --name-only --diff-filter=A "origin/${{ github.base_ref }}...HEAD" | grep -E '^docs/stories/.*\.md$' || true)
+          if [ -z "$NEW_STORIES" ]; then
+            echo "has_stories=false" >> "$GITHUB_OUTPUT"
+            echo "No new story files in docs/stories/, skipping."
+          else
+            echo "has_stories=true" >> "$GITHUB_OUTPUT"
+            EOF_MARKER=$(dd if=/dev/urandom bs=15 count=1 2>/dev/null | base64)
+            echo "story_files<<${EOF_MARKER}" >> "$GITHUB_OUTPUT"
+            echo "$NEW_STORIES" >> "$GITHUB_OUTPUT"
+            echo "${EOF_MARKER}" >> "$GITHUB_OUTPUT"
+            echo "New story files detected:"
+            echo "$NEW_STORIES"
+          fi
+
+      - name: Install uv
+        if: steps.detect_stories.outputs.has_stories == 'true'
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install specify-cli
+        if: steps.detect_stories.outputs.has_stories == 'true'
+        run: uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
+
+      - name: Install Cursor CLI
+        if: steps.detect_stories.outputs.has_stories == 'true'
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
+
+      - name: Run full SDD pipeline
+        if: steps.detect_stories.outputs.has_stories == 'true'
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          STORY_FILES: ${{ steps.detect_stories.outputs.story_files }}
+        run: |
+          cat > /tmp/sdd-prompt.txt << 'PROMPT_EOF'
+          You are running a fully automated, non-interactive Spec-Driven
+          Development (SDD) pipeline. You MUST NOT ask questions, request
+          clarification, or wait for user input at any point. Make reasonable
+          assumptions for any ambiguity and proceed autonomously.
+
+          New story files have been added to this PR:
+
+          STORY_FILES_PLACEHOLDER
+
+          For EACH story file, execute ALL four SDD phases end-to-end:
+
+          Phase 1 - Specify:
+          Read the story content. Run /speckit.specify to generate spec.md.
+          For any [NEEDS CLARIFICATION] items, make a reasonable assumption
+          based on context and industry standards. Do NOT ask the user.
+
+          Phase 2 - Plan:
+          Run /speckit.plan to generate plan.md from the spec and constitution.
+          Resolve all technical decisions autonomously. Do NOT ask the user.
+
+          Phase 3 - Tasks:
+          Run /speckit.tasks to generate tasks.md from the plan and spec.
+
+          Phase 4 - Implement:
+          Run /speckit.implement to execute all tasks in tasks.md.
+          Follow TDD approach: write tests first, then implement.
+          Complete every task. Do NOT stop halfway or ask for confirmation.
+
+          CRITICAL RULES:
+          - This is NON-INTERACTIVE mode. NEVER ask questions or wait for input.
+          - Make informed decisions autonomously for ALL ambiguities.
+          - DO NOT create, modify, or delete any files under .github/ directory.
+          - DO NOT modify .gitignore file.
+          - If a task involves CI/CD config changes, skip that task.
+          - Complete all four phases in a single run without stopping.
+          - Output a summary of all generated artifacts and code when done.
+          PROMPT_EOF
+
+          FINAL_PROMPT=$(sed "s|STORY_FILES_PLACEHOLDER|${STORY_FILES}|g" /tmp/sdd-prompt.txt)
+          echo "$FINAL_PROMPT" > /tmp/sdd-prompt-final.txt
+          agent --force -p "$(cat /tmp/sdd-prompt-final.txt)" --plan
+
+      - name: Clean and push generated code
+        if: steps.detect_stories.outputs.has_stories == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git checkout HEAD -- .github/ 2>/dev/null || true
+          git checkout HEAD -- .gitignore 2>/dev/null || true
+          git rm -rf --cached node_modules 2>/dev/null || true
+          git rm -rf --cached .next 2>/dev/null || true
+          git rm -rf --cached dist 2>/dev/null || true
+          git rm -rf --cached build 2>/dev/null || true
+          git rm -rf --cached coverage 2>/dev/null || true
+
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes generated, skipping commit."
+          else
+            git commit -m "chore(auto): generate spec + code from stories (SDD Pipeline)"
+            git push
+          fi
