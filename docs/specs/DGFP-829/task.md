@@ -1,5 +1,6 @@
 ## 1. Implementation Roadmap
 
+
 * [ ] **Task 1:** 创建首页页面容器与路由配置 — *Scope: `apps/frontend/pages/index.tsx`*  
 * [ ] **Task 2:** 实现 Header 组件结构与样式 — *Scope: `apps/frontend/components/Header/Header.tsx`*  
 * [ ] **Task 3:** 实现 Banner 组件（图片/视频展示逻辑） — *Scope: `apps/frontend/components/Banner/Banner.tsx`, `BannerMedia.tsx`*  
