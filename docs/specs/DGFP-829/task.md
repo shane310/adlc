@@ -16,7 +16,6 @@
 * [ ] **Task 13:** 创建 ADR 文档记录模块决策 — *Scope: `docs/adr/ADR-frontend-homepage.md`*  
 * [ ] **Task 14:** 更新 CI 流程，确保 Lint、测试、覆盖率执行 — *Scope: `.github/workflows/ci.yml`*  
 
-
 ---
 
 ## 2. Detailed Execution Guide
