@@ -1,71 +1,94 @@
-name: Spec → Code 自动生成（Cursor + Spec Kit） - PR 版
+name: Spec to Code
 
 on:
   pull_request:
-    branches: [ develop ]
-    types: [ opened, synchronize ]   # opened=新建PR，synchronize=推送新commit
-    paths:
-      - '**/spec.md'
-      - '**/plan.md'
-      - '**/tasks.md'
-      - '**/*spec*.md'
-      - '**/*plan*.md'
-      - '**/*task*.md'
+    branches:
+      - develop
+    types:
+      - opened
+      - synchronize
 
 permissions:
-  contents: write   # 必须！允许 push 到 PR 的 feature 分支
+  contents: write
+  pull-requests: write
 
 jobs:
   generate:
     runs-on: ubuntu-latest
     steps:
-      - name: 拉取 PR 的 feature 分支（关键修改）
+      - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}        # 直接 checkout PR 源分支
-          token: ${{ secrets.GITHUB_TOKEN }} # 保证能 push
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
 
-      - name: 安装 uv
+      - name: Check for spec file changes
+        id: check_specs
+        run: |
+          git fetch origin "${{ github.base_ref }}"
+          CHANGED=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD" | grep -E '(spec|plan|tasks).*\.md$' || true)
+          if [ -z "$CHANGED" ]; then
+            echo "has_specs=false" >> "$GITHUB_OUTPUT"
+            echo "No spec file changes found, skipping."
+          else
+            echo "has_specs=true" >> "$GITHUB_OUTPUT"
+            echo "Spec files changed:"
+            echo "$CHANGED"
+          fi
+
+      - name: Install uv
+        if: steps.check_specs.outputs.has_specs == 'true'
         uses: astral-sh/setup-uv@v5
 
-      - name: 安装 specify-cli（Spec Kit）
+      - name: Install specify-cli
+        if: steps.check_specs.outputs.has_specs == 'true'
         run: uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
 
-      - name: 安装 Cursor CLI
+      - name: Install Cursor CLI
+        if: steps.check_specs.outputs.has_specs == 'true'
         run: |
           curl https://cursor.com/install -fsS | bash
-          echo "$HOME/.cursor/bin" >> $GITHUB_PATH
+          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
 
-      - name: Cursor Agent 根据 spec 生成代码
+      - name: Generate code with Cursor Agent
+        if: steps.check_specs.outputs.has_specs == 'true'
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         run: |
-          agent --force -p '
-你正在使用 GitHub Spec Kit 进行 Spec-Driven Development。
+          cat > /tmp/agent-prompt.txt << 'PROMPT_EOF'
+          You are using GitHub Spec Kit for Spec-Driven Development.
 
-仓库中已存在最新的 spec.md（需求规格）、plan.md（技术计划）和 tasks.md（可执行任务列表）。
+          Execute the implement phase strictly:
+          1. Check constitution.md if it exists.
+          2. Follow tasks.md in order, complete each task using TDD (tests first).
+          3. Only modify source code files, follow project conventions strictly.
+          4. DO NOT create, modify, or delete any files under .github/ directory.
+          5. DO NOT modify .gitignore file.
+          6. If a task requires CI/CD config changes, skip that task.
+          7. Output a summary of changes when done.
 
-请严格执行 implement 阶段：
-1. 先检查 constitution.md（如果存在）。
-2. 按 tasks.md 的顺序和依赖关系逐个完成任务。
-3. 每个任务必须先写测试（TDD），再实现功能。
-4. 只修改必要的源代码文件，严格遵守项目规范和 constitution。
-5. 完成后输出本次变更的总结。
+          Execute autonomously, do not ask for confirmation.
+          PROMPT_EOF
+          agent --force -p "$(cat /tmp/agent-prompt.txt)"
 
-请自主执行，不要询问确认。
-' 
-
-      - name: 提交并推送生成的代码到 PR 分支（会自动更新 PR）
+      - name: Clean and push generated code
+        if: steps.check_specs.outputs.has_specs == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
+
+          git checkout HEAD -- .github/ 2>/dev/null || true
+          git checkout HEAD -- .gitignore 2>/dev/null || true
+          git rm -rf --cached node_modules 2>/dev/null || true
+          git rm -rf --cached .next 2>/dev/null || true
+          git rm -rf --cached dist 2>/dev/null || true
+          git rm -rf --cached build 2>/dev/null || true
+          git rm -rf --cached coverage 2>/dev/null || true
+
           git add -A
-          
           if git diff --staged --quiet; then
-            echo "没有代码变更，跳过提交"
+            echo "No code changes, skipping commit."
           else
-            git commit -m "chore(auto): 根据 spec.md 生成代码（Cursor + Spec Kit）"
+            git commit -m "chore(auto): generate code from spec (Cursor + Spec Kit)"
             git push
           fi
