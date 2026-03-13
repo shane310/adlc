@@ -1,8 +1,9 @@
-name: Spec → Code 自动生成（Cursor + Spec Kit）
+name: Spec → Code 自动生成（Cursor + Spec Kit） - PR 版
 
 on:
-  push:
+  pull_request:
     branches: [ develop ]
+    types: [ opened, synchronize ]   # opened=新建PR，synchronize=推送新commit
     paths:
       - '**/spec.md'
       - '**/plan.md'
@@ -12,31 +13,30 @@ on:
       - '**/*task*.md'
 
 permissions:
-  contents: write
+  contents: write   # 必须！允许 push 到 PR 的 feature 分支
 
 jobs:
   generate:
     runs-on: ubuntu-latest
     steps:
-      - name: 拉取仓库
+      - name: 拉取 PR 的 feature 分支（关键修改）
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.head_ref }}        # 直接 checkout PR 源分支
+          token: ${{ secrets.GITHUB_TOKEN }} # 保证能 push
           fetch-depth: 0
 
-      # ================== 安装 uv + specify-cli ==================
       - name: 安装 uv
         uses: astral-sh/setup-uv@v5
 
       - name: 安装 specify-cli（Spec Kit）
         run: uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
 
-      # ================== 安装 Cursor CLI ==================
       - name: 安装 Cursor CLI
         run: |
           curl https://cursor.com/install -fsS | bash
           echo "$HOME/.cursor/bin" >> $GITHUB_PATH
 
-      # ================== 用 Cursor Agent 生成代码 ==================
       - name: Cursor Agent 根据 spec 生成代码
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
@@ -56,8 +56,7 @@ jobs:
 请自主执行，不要询问确认。
 ' 
 
-      # ================== 自动提交代码 ==================
-      - name: 提交并推送生成的代码
+      - name: 提交并推送生成的代码到 PR 分支（会自动更新 PR）
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
