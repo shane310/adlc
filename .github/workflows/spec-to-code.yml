@@ -1,20 +1,20 @@
 name: Spec → Code 自动生成（Cursor + Spec Kit） - PR Target 版
 
 on:
-  pull_request_target:          # ← 改成 target，更可靠
+  pull_request_target:
     branches: [ develop ]
     types: [ opened, synchronize ]
     paths:
       - '**/spec.md'
       - '**/plan.md'
-      - '**/task.md'
+      - '**/tasks.md'
       - '**/*spec*.md'
       - '**/*plan*.md'
       - '**/*task*.md'
 
 permissions:
   contents: write
-  pull-requests: write   # 可选：以后可以自动 comment
+  pull-requests: write
 
 jobs:
   generate:
@@ -42,7 +42,7 @@ jobs:
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         run: |
-          agent --force -p '
+          agent --force -p <<'EOF'
 你正在使用 GitHub Spec Kit 进行 Spec-Driven Development。
 
 请严格执行 implement 阶段：
@@ -52,7 +52,7 @@ jobs:
 4. 完成后输出变更总结
 
 自主执行，不要询问。
-' 
+EOF
 
       - name: 提交并推送代码到 PR 分支
         run: |
