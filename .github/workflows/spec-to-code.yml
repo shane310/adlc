@@ -58,22 +58,36 @@ jobs:
             1. 检查 constitution.md（若存在）
             2. 按 tasks.md 顺序逐个完成任务（TDD：先测试后实现）
             3. 只修改源代码文件，严格遵守项目规范
-            4. 禁止创建或修改 .github/ 目录下的任何文件
-            5. 完成后输出变更总结
 
-            自主执行，不要询问。
+            严格禁止以下行为：
+            - 禁止创建、修改或删除 .github/ 目录下的任何文件
+            - 禁止修改 .gitignore 文件
+            - 如果任务要求修改 CI/CD 配置，请跳过该任务
+
+            完成后输出变更总结。自主执行，不要询问。
         run: |
           agent --force -p "$AGENT_PROMPT"
 
-      - name: 提交并推送代码到 PR 分支
+      - name: 清理并提交代码到 PR 分支
         if: steps.check_specs.outputs.has_specs == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git reset HEAD -- .github/
-          git checkout -- .github/ 2>/dev/null || true
-          
+          # 撤销 Agent 对 .github/ 目录的任何改动
+          git checkout HEAD -- .github/ 2>/dev/null || true
+          git rm -rf --cached .github/workflows/ci.yml 2>/dev/null || true
+
+          # 强制移除不应提交的目录（即使 .gitignore 被修改）
+          git rm -rf --cached node_modules 2>/dev/null || true
+          git rm -rf --cached .next 2>/dev/null || true
+          git rm -rf --cached dist 2>/dev/null || true
+          git rm -rf --cached build 2>/dev/null || true
+          git rm -rf --cached coverage 2>/dev/null || true
+
+          # 确保 .gitignore 未被修改
+          git checkout HEAD -- .gitignore 2>/dev/null || true
+
           git add -A
           if git diff --staged --quiet; then
             echo "无代码变更，跳过"

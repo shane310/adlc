@@ -14,8 +14,7 @@
 * [ ] **Task 11:** 编写单元测试（Banner、首次访问逻辑） — *Scope: `apps/frontend/__tests__/unit/`*  
 * [ ] **Task 12:** 编写 E2E 测试（首页加载与首次访问逻辑） — *Scope: `apps/frontend/__tests__/e2e/homepage.spec.js`*  
 * [ ] **Task 13:** 创建 ADR 文档记录模块决策 — *Scope: `docs/adr/ADR-frontend-homepage.md`*  
-* [ ] **Task 14:** 更新 CI 流程，确保 Lint、测试、覆盖率执行 — *Scope: `.github/workflows/ci.yml`*  
-
+* [ ] **Task 14:** ~~更新 CI 流程~~ — *已跳过：CI 配置由基础设施团队维护，不在本次 scope 内*  
 
 ---
 
@@ -164,12 +163,8 @@
 
 ---
 
-### Task 14: 更新 CI 流程，确保 Lint、测试、覆盖率执行
-* **Target Context:** `.github/workflows/ci.yml`
-* **Implementation Logic:**  
-  - 添加执行步骤：`npm run lint`, `npm run test`, `npm run test:e2e`。  
-  - 设置覆盖率门槛 ≥80%。  
-  - 所有步骤通过后方可 merge。  
+### Task 14: ~~更新 CI 流程~~
+*已跳过：CI 配置由基础设施团队维护，不在本次 scope 内。*  
 
 ---
 
@@ -182,5 +177,5 @@
 | **E2E 测试** | 执行 `npm run test:e2e`，验证首访逻辑与 Banner 展示。 |
 | **SEO 检查** | 查看页面源码，确认 meta title/description 正确输出。 |
 | **性能要求** | Lighthouse 分析首页加载时间 <3s。 |
-| **CI 合规性** | `.github/workflows/ci.yml` 全部步骤通过。 |
+| **CI 合规性** | CI 由基础设施团队维护，本次不涉及。 |
 | **文档完整性** | `docs/adr/ADR-frontend-homepage.md` 已提交且符合模板格式。 |
