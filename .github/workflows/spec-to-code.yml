@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  workflows: write
 
 jobs:
   generate:
@@ -58,7 +59,8 @@ jobs:
             1. 检查 constitution.md（若存在）
             2. 按 tasks.md 顺序逐个完成任务（TDD：先测试后实现）
             3. 只修改源代码文件，严格遵守项目规范
-            4. 完成后输出变更总结
+            4. 禁止创建或修改 .github/workflows/ 下的任何文件
+            5. 完成后输出变更总结
 
             自主执行，不要询问。
         run: |
