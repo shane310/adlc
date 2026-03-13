@@ -1,7 +1,7 @@
-name: Spec → Code 自动生成（Cursor + Spec Kit） - PR Target 版
+name: Spec to Code 自动生成（Cursor + Spec Kit）
 
 on:
-  pull_request_target:
+  pull_request:
     branches: [ develop ]
     types: [ opened, synchronize ]
 
@@ -13,19 +13,17 @@ jobs:
   generate:
     runs-on: ubuntu-latest
     steps:
-      - name: 拉取 PR 的 feature 分支
+      - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
-          token: ${{ github.token }}
           fetch-depth: 0
 
       - name: 检查是否包含 spec 文件变更
         id: check_specs
         run: |
-          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- \
-            '**/*spec*.md' '**/*plan*.md' '**/*task*.md' \
-            '**/spec.md' '**/plan.md' '**/task.md')
+          git fetch origin ${{ github.base_ref }}
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '(spec|plan|task).*\.md$' || true)
           if [ -z "$CHANGED" ]; then
             echo "has_specs=false" >> "$GITHUB_OUTPUT"
             echo "无 spec 相关文件变更，跳过后续步骤"
