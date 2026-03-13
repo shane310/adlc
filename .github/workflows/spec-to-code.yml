@@ -1,96 +1,70 @@
-name: Spec to Code 自动生成（Cursor + Spec Kit）
+name: Spec → Code 自动生成（Cursor + Spec Kit） - PR 版
 
 on:
   pull_request:
     branches: [ develop ]
-    types: [ opened, synchronize ]
+    types: [ opened, synchronize ]   # opened=新建PR，synchronize=推送新commit
+    paths:
+      - '**/spec.md'
+      - '**/plan.md'
+      - '**/tasks.md'
+      - '**/*spec*.md'
+      - '**/*plan*.md'
+      - '**/*task*.md'
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: write   # 必须！允许 push 到 PR 的 feature 分支
 
 jobs:
   generate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout PR branch
+      - name: 拉取 PR 的 feature 分支（关键修改）
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.head_ref }}        # 直接 checkout PR 源分支
+          token: ${{ secrets.GITHUB_TOKEN }} # 保证能 push
           fetch-depth: 0
 
-      - name: 检查是否包含 spec 文件变更
-        id: check_specs
-        run: |
-          git fetch origin ${{ github.base_ref }}
-          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '(spec|plan|task).*\.md$' || true)
-          if [ -z "$CHANGED" ]; then
-            echo "has_specs=false" >> "$GITHUB_OUTPUT"
-            echo "无 spec 相关文件变更，跳过后续步骤"
-          else
-            echo "has_specs=true" >> "$GITHUB_OUTPUT"
-            echo "检测到 spec 文件变更:"
-            echo "$CHANGED"
-          fi
-
       - name: 安装 uv
-        if: steps.check_specs.outputs.has_specs == 'true'
         uses: astral-sh/setup-uv@v5
 
-      - name: 安装 specify-cli
-        if: steps.check_specs.outputs.has_specs == 'true'
+      - name: 安装 specify-cli（Spec Kit）
         run: uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
 
       - name: 安装 Cursor CLI
-        if: steps.check_specs.outputs.has_specs == 'true'
         run: |
           curl https://cursor.com/install -fsS | bash
           echo "$HOME/.cursor/bin" >> $GITHUB_PATH
 
-      - name: Cursor Agent 生成代码
-        if: steps.check_specs.outputs.has_specs == 'true'
+      - name: Cursor Agent 根据 spec 生成代码
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-          AGENT_PROMPT: |
-            你正在使用 GitHub Spec Kit 进行 Spec-Driven Development。
-
-            请严格执行 implement 阶段：
-            1. 检查 constitution.md（若存在）
-            2. 按 tasks.md 顺序逐个完成任务（TDD：先测试后实现）
-            3. 只修改源代码文件，严格遵守项目规范
-
-            严格禁止以下行为：
-            - 禁止创建、修改或删除 .github/ 目录下的任何文件
-            - 禁止修改 .gitignore 文件
-            - 如果任务要求修改 CI/CD 配置，请跳过该任务
-
-            完成后输出变更总结。自主执行，不要询问。
         run: |
-          agent --force -p "$AGENT_PROMPT"
+          agent --force -p '
+你正在使用 GitHub Spec Kit 进行 Spec-Driven Development。
 
-      - name: 清理并提交代码到 PR 分支
-        if: steps.check_specs.outputs.has_specs == 'true'
+仓库中已存在最新的 spec.md（需求规格）、plan.md（技术计划）和 tasks.md（可执行任务列表）。
+
+请严格执行 implement 阶段：
+1. 先检查 constitution.md（如果存在）。
+2. 按 tasks.md 的顺序和依赖关系逐个完成任务。
+3. 每个任务必须先写测试（TDD），再实现功能。
+4. 只修改必要的源代码文件，严格遵守项目规范和 constitution。
+5. 完成后输出本次变更的总结。
+
+请自主执行，不要询问确认。
+' 
+
+      - name: 提交并推送生成的代码到 PR 分支（会自动更新 PR）
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # 撤销 Agent 对 .github/ 目录的任何改动
-          git checkout HEAD -- .github/ 2>/dev/null || true
-          git rm -rf --cached .github/workflows/ci.yml 2>/dev/null || true
-
-          # 强制移除不应提交的目录（即使 .gitignore 被修改）
-          git rm -rf --cached node_modules 2>/dev/null || true
-          git rm -rf --cached .next 2>/dev/null || true
-          git rm -rf --cached dist 2>/dev/null || true
-          git rm -rf --cached build 2>/dev/null || true
-          git rm -rf --cached coverage 2>/dev/null || true
-
-          # 确保 .gitignore 未被修改
-          git checkout HEAD -- .gitignore 2>/dev/null || true
-
+          
           git add -A
+          
           if git diff --staged --quiet; then
-            echo "无代码变更，跳过"
+            echo "没有代码变更，跳过提交"
           else
             git commit -m "chore(auto): 根据 spec.md 生成代码（Cursor + Spec Kit）"
             git push
