@@ -1,35 +1,36 @@
-name: Spec → Code 自动生成（Cursor + Spec Kit） - PR 版
+name: Spec → Code 自动生成（Cursor + Spec Kit） - PR Target 版
 
 on:
-  pull_request:
+  pull_request_target:          # ← 改成 target，更可靠
     branches: [ develop ]
-    types: [ opened, synchronize ]   # opened=新建PR，synchronize=推送新commit
+    types: [ opened, synchronize ]
     paths:
       - '**/spec.md'
       - '**/plan.md'
-      - '**/tasks.md'
+      - '**/task.md'
       - '**/*spec*.md'
       - '**/*plan*.md'
       - '**/*task*.md'
 
 permissions:
-  contents: write   # 必须！允许 push 到 PR 的 feature 分支
+  contents: write
+  pull-requests: write   # 可选：以后可以自动 comment
 
 jobs:
   generate:
     runs-on: ubuntu-latest
     steps:
-      - name: 拉取 PR 的 feature 分支（关键修改）
+      - name: 拉取 PR 的 feature 分支
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}        # 直接 checkout PR 源分支
-          token: ${{ secrets.GITHUB_TOKEN }} # 保证能 push
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: 安装 uv
         uses: astral-sh/setup-uv@v5
 
-      - name: 安装 specify-cli（Spec Kit）
+      - name: 安装 specify-cli
         run: uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
 
       - name: 安装 Cursor CLI
@@ -37,34 +38,30 @@ jobs:
           curl https://cursor.com/install -fsS | bash
           echo "$HOME/.cursor/bin" >> $GITHUB_PATH
 
-      - name: Cursor Agent 根据 spec 生成代码
+      - name: Cursor Agent 生成代码
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         run: |
           agent --force -p '
 你正在使用 GitHub Spec Kit 进行 Spec-Driven Development。
 
-仓库中已存在最新的 spec.md（需求规格）、plan.md（技术计划）和 tasks.md（可执行任务列表）。
-
 请严格执行 implement 阶段：
-1. 先检查 constitution.md（如果存在）。
-2. 按 tasks.md 的顺序和依赖关系逐个完成任务。
-3. 每个任务必须先写测试（TDD），再实现功能。
-4. 只修改必要的源代码文件，严格遵守项目规范和 constitution。
-5. 完成后输出本次变更的总结。
+1. 检查 constitution.md（若存在）
+2. 按 tasks.md 顺序逐个完成任务（TDD：先测试后实现）
+3. 只修改源代码文件，严格遵守项目规范
+4. 完成后输出变更总结
 
-请自主执行，不要询问确认。
+自主执行，不要询问。
 ' 
 
-      - name: 提交并推送生成的代码到 PR 分支（会自动更新 PR）
+      - name: 提交并推送代码到 PR 分支
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
           git add -A
-          
           if git diff --staged --quiet; then
-            echo "没有代码变更，跳过提交"
+            echo "无代码变更，跳过"
           else
             git commit -m "chore(auto): 根据 spec.md 生成代码（Cursor + Spec Kit）"
             git push
