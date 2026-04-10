@@ -1,0 +1,10 @@
+{
+  "name": "adlc",
+  "private": true,
+  "packageManager": "pnpm@10.6.5",
+  "scripts": {
+    "build": "pnpm -C apps/web build",
+    "test": "pnpm -C apps/web test",
+    "dev": "pnpm -C apps/web dev"
+  }
+}
