@@ -111,6 +111,17 @@ describe('Banner', () => {
     expect(dots).toHaveLength(2);
   });
 
+  it('switches slide when a dot is clicked', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    render(<Banner items={imageItems} interval={3000} />);
+    expect(screen.getByRole('img', { name: 'Banner 1' })).toBeInTheDocument();
+
+    const dots = screen.getAllByTestId('banner-dot');
+    await user.click(dots[1]);
+
+    expect(screen.getByRole('img', { name: 'Banner 2' })).toBeInTheDocument();
+  });
+
   it('renders gracefully with empty items', () => {
     render(<Banner items={[]} />);
     const fallback = screen.getByTestId('banner-fallback');

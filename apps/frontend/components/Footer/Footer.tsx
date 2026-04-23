@@ -14,6 +14,7 @@ export const Footer: React.FC = () => {
         </div>
         <div className={styles.footerCopyright} data-testid="footer-copyright">
           <p>&copy; {currentYear} 公司名称 版权所有</p>
+          <p>京ICP备xxxxxxxx号</p>
         </div>
       </div>
     </footer>

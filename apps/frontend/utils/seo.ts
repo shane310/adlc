@@ -12,7 +12,7 @@ export interface SeoMeta {
 const DEFAULT_TITLE = '公司官网 - 首页';
 const DEFAULT_DESCRIPTION = '欢迎访问公司官网，了解我们的产品与服务。';
 
-export function generateSeoMeta(
+export function applySeoMeta(
   title?: string,
   description?: string
 ): SeoMeta {
@@ -29,4 +29,11 @@ export function generateSeoMeta(
       locale: 'zh_CN',
     },
   };
+}
+
+export function generateSeoMeta(
+  title?: string,
+  description?: string
+): SeoMeta {
+  return applySeoMeta(title, description);
 }
