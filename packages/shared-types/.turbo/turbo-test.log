@@ -1,0 +1,14 @@
+
+> @zhimao/shared-types@0.1.0 test /home/runner/work/adlc/adlc/packages/shared-types
+> vitest run
+
+
+ RUN  v3.2.4 /home/runner/work/adlc/adlc/packages/shared-types
+
+ ✓ src/index.spec.ts (1 test) 2ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  02:23:25
+   Duration  276ms (transform 37ms, setup 0ms, collect 19ms, tests 2ms, environment 0ms, prepare 85ms)
+

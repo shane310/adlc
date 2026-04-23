@@ -1,0 +1,9 @@
+
+> @zhimao/api@0.1.0 build /home/runner/work/adlc/adlc/apps/api
+> nest build
+
+-  TSC  Initializing type checker...
+✔  TSC  Initializing type checker...
+>  TSC  Found 0 issues.
+>  SWC  Running...
+Successfully compiled: 17 files with swc (76.08ms)

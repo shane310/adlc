@@ -1,0 +1,4 @@
+
+> @zhimao/shared-types@0.1.0 lint /home/runner/work/adlc/adlc/packages/shared-types
+> pnpm exec eslint -c ../../eslint.config.js "src/**/*.ts" --max-warnings 0
+

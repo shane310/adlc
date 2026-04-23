@@ -1,0 +1,4 @@
+
+> @zhimao/web@0.1.0 lint /home/runner/work/adlc/adlc/apps/web
+> pnpm exec eslint -c ../../eslint.config.js "src/**/*.{ts,vue}" --max-warnings 0
+

@@ -1,0 +1,14 @@
+
+> @zhimao/web@0.1.0 build /home/runner/work/adlc/adlc/apps/web
+> vue-tsc -p tsconfig.app.json --noEmit && vite build
+
+vite v6.4.2 building for production...
+transforming...
+✓ 2814 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                      0.32 kB │ gzip:  0.24 kB
+dist/assets/HomeView-DqoMVty7.css    0.07 kB │ gzip:  0.09 kB
+dist/assets/HomeView-2aO09exx.js     0.53 kB │ gzip:  0.42 kB
+dist/assets/index-BuPhPpIM.js      166.50 kB │ gzip: 62.12 kB
+✓ built in 3.67s
