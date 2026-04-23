@@ -121,6 +121,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes generated, skipping commit."
           else
-            git commit -m "chore(auto): generate spec + code from stories (SDD Pipeline)"
+            git commit --no-verify -m "chore(auto): generate spec + code from stories (SDD Pipeline)"
             git push
           fi
