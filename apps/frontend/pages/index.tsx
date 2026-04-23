@@ -8,7 +8,7 @@ import { ServicesProducts, ServiceItem } from '../components/ServicesProducts/Se
 import { Footer } from '../components/Footer/Footer';
 import { FirstVisitOverlay } from '../components/FirstVisitOverlay/FirstVisitOverlay';
 import { useFirstVisit } from '../hooks/useFirstVisit';
-import { generateSeoMeta } from '../utils/seo';
+import { applySeoMeta } from '../utils/seo';
 import styles from '../styles/homepage.module.scss';
 
 const bannerItems: BannerItem[] = [
@@ -30,7 +30,7 @@ const serviceItems: ServiceItem[] = [
 
 export default function HomePage() {
   const { isFirstVisit, markVisited } = useFirstVisit();
-  const seo = generateSeoMeta();
+  const seo = applySeoMeta();
 
   return (
     <>
