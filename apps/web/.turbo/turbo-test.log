@@ -5,10 +5,10 @@
 
  RUN  v3.2.4 /home/runner/work/adlc/adlc/apps/web
 
- ✓ src/App.spec.ts (1 test) 24ms
+ ✓ src/App.spec.ts (1 test) 20ms
 
  Test Files  1 passed (1)
       Tests  1 passed (1)
-   Start at  02:23:27
-   Duration  2.15s (transform 217ms, setup 0ms, collect 1.15s, tests 24ms, environment 499ms, prepare 200ms)
+   Start at  02:30:23
+   Duration  2.48s (transform 234ms, setup 0ms, collect 1.45s, tests 20ms, environment 548ms, prepare 139ms)
 
