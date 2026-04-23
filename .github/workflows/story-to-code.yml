@@ -111,11 +111,12 @@ jobs:
 
           git checkout HEAD -- .github/ 2>/dev/null || true
           git checkout HEAD -- .gitignore 2>/dev/null || true
-          git rm -rf --cached node_modules 2>/dev/null || true
-          git rm -rf --cached .next 2>/dev/null || true
-          git rm -rf --cached dist 2>/dev/null || true
-          git rm -rf --cached build 2>/dev/null || true
-          git rm -rf --cached coverage 2>/dev/null || true
+
+          rm -rf node_modules .next dist build out coverage .pnp .pnp.js
+          find . -name "*.tsbuildinfo" -delete 2>/dev/null || true
+          find . -name "package-lock.json" -not -path "./.git/*" -delete 2>/dev/null || true
+          find . -name "pnpm-lock.yaml" -not -path "./.git/*" -delete 2>/dev/null || true
+          find . -name "yarn.lock" -not -path "./.git/*" -delete 2>/dev/null || true
 
           git add -A
           if git diff --staged --quiet; then
