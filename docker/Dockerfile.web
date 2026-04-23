@@ -1,0 +1,17 @@
+FROM node:22-slim AS builder
+WORKDIR /app
+RUN corepack enable
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/shared-types/package.json ./packages/shared-types/
+RUN pnpm install --frozen-lockfile
+COPY . .
+RUN pnpm approve-builds --all
+RUN pnpm --filter @zhimao/shared-types build
+RUN pnpm --filter @zhimao/web build
+RUN pnpm --filter @zhimao/web deploy /out/web --prod --legacy
+
+FROM nginx:alpine AS runner
+COPY --from=builder /out/web/dist /usr/share/nginx/html
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+EXPOSE 80

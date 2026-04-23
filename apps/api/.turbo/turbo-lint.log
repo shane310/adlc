@@ -1,0 +1,4 @@
+
+> @zhimao/api@0.1.0 lint /home/runner/work/adlc/adlc/apps/api
+> pnpm exec eslint -c ../../eslint.config.js "src/**/*.ts" --max-warnings 0
+

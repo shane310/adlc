@@ -1,0 +1,12 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Story 1.2 将在此添加 Tenant、User 等实体
+// Story 1.1 只需此文件存在并可成功 generate/migrate

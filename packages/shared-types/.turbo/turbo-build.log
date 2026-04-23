@@ -1,0 +1,22 @@
+
+> @zhimao/shared-types@0.1.0 build /home/runner/work/adlc/adlc/packages/shared-types
+> tsup
+
+CLI Building entry: src/index.ts
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Using tsup config: /home/runner/work/adlc/adlc/packages/shared-types/tsup.config.ts
+CLI Target: es2022
+CLI Cleaning output folder
+CJS Build start
+ESM Build start
+CJS dist/index.cjs     792.00 B
+CJS dist/index.cjs.map 180.00 B
+CJS ⚡️ Build success in 26ms
+ESM dist/index.js     33.00 B
+ESM dist/index.js.map 71.00 B
+ESM ⚡️ Build success in 34ms
+DTS Build start
+DTS ⚡️ Build success in 681ms
+DTS dist/index.d.ts  87.00 B
+DTS dist/index.d.mts 87.00 B
