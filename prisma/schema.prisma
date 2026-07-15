@@ -1,0 +1,123 @@
+// NISIT Admin Dashboard – DGFP-1109
+// Aligned with Stories 1.2 (User / Role / Permission), 1.5 (Session), 1.10 (AuditLog)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum SystemRole {
+  BUSINESS_USER
+  INSPECTOR
+  ADMINISTRATOR
+  GOVERNMENT_AGENCY
+  PUBLIC_CITIZEN
+  SYSTEM_ADMIN
+}
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  hashedPassword String
+  firstName      String
+  lastName       String
+  companyName    String?
+  phone          String?
+  mfaEnabled     Boolean   @default(false)
+  isActive       Boolean   @default(true)
+  lastLoginAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  roleId     String
+  role       Role       @relation(fields: [roleId], references: [id])
+  sessions   Session[]
+  auditLogs  AuditLog[]
+
+  @@index([roleId])
+  @@index([isActive])
+  @@index([email])
+}
+
+model Role {
+  id           String     @id @default(cuid())
+  name         SystemRole @unique
+  description  String
+  requiresMfa  Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  users            User[]
+  rolePermissions  RolePermission[]
+}
+
+model Permission {
+  id        String   @id @default(cuid())
+  resource  String
+  action    String
+  createdAt DateTime @default(now())
+
+  rolePermissions RolePermission[]
+
+  @@unique([resource, action])
+  @@index([resource])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  createdAt    DateTime @default(now())
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expires])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  resource   String
+  resourceId String?
+  details    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([resource])
+  @@index([createdAt])
+}
+
+model SystemSetting {
+  key         String   @id
+  value       Json
+  category    String
+  description String?
+  updatedBy   String?
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+}
